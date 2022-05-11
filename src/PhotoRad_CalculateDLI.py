@@ -21,7 +21,7 @@ except:
     pass
 
 __author__ = "Sarith"
-__version__ = "2022.03.29"
+__version__ = "2020.12.21"
 
 import rhinoscriptsyntax as rs
 
