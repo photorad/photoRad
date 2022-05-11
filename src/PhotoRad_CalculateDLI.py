@@ -1,6 +1,7 @@
 """Calculate Daily Light Integral (DLI)
     Args:
-        _radResults: The results from the AnnualIrradiance simulation run through HoneybeeRadiance.
+        _radResults: The results from the AnnualIrradiance simulation run through
+        HoneybeeRadiance.
         _dliConvFactor: Conversion factor used to calculate PAR. Defaults to 0.2.
         _run: Set this to True to run the component.
 
@@ -20,7 +21,7 @@ except:
     pass
 
 __author__ = "Sarith"
-__version__ = "2022.03.29"
+__version__ = "2020.12.21"
 
 import rhinoscriptsyntax as rs
 
@@ -32,15 +33,15 @@ from pprint import pprint
 import tempfile
 
 
-# Multiplier for ill to fc: 0.092903
+# Note: Rad file and rad refers to radiation data files that contain data in W/m2
 
 class DLIdata(object):
-    def __init__(self, illFile, ptsFile, conversionFactor=20):
-        self.dliDailyData = self._calcDLI(illFile, ptsFile, conversionFactor)
+    def __init__(self, radFile, ptsFile, conversionFactor=3.72):
+        self.dliDailyData = self._calcDLI(radFile, ptsFile, conversionFactor)
 
-    def _parseIllPtsFile(self, filePath, slicePositionStart=0, slicePositionEnd=None):
+    def _parseRadPtsFile(self, filePath, slicePositionStart=0, slicePositionEnd=None):
         """
-        Parse multiple files in the ill format and return cleaned data. This function
+        Parse multiple files in the rad format and return cleaned data. This function
         is for internal use only.
         """
         assert os.path.exists(filePath), "The file path (%s) was not found" % filePath
@@ -58,39 +59,39 @@ class DLIdata(object):
                 dataList.append(lineData)
         return dataList
 
-    def _calcDLI(self, illFilePath, ptsFilePath, convFactor=20):
+    def _calcDLI(self, radFilePath, ptsFilePath, convFactor=3.72):
 
         assert os.path.exists(
-            illFilePath), "The ill file (%s) was not found." % illFilePath
+            radFilePath), "The rad file (%s) was not found." % radFilePath
 
         assert os.path.exists(
             ptsFilePath), "The pts file (%s) was not found." % ptsFilePath
 
-        illDataSet = self._parseIllPtsFile(illFilePath, 3)
+        radDataSet = self._parseRadPtsFile(radFilePath, 3)
 
-        ptsLength = len(self._parseIllPtsFile(ptsFilePath))
-        illLength = len(illDataSet[0])
+        ptsLength = len(self._parseRadPtsFile(ptsFilePath))
+        radLength = len(radDataSet[0])
 
-        assert ptsLength == illLength, "The number of data points in points file (%s) and ill file (%s) must be the same." % (
-        ptsLength, illLength)
+        assert ptsLength == radLength, "The number of data points in points file (%s) " \
+                                       "and rad file (%s) must be the same." % (
+        ptsLength, radLength)
 
         # Convert from 8760 x numPoints to numPoints x 8760 matrix
-        illDataSetTr = list(zip(*illDataSet))
+        radDataSetTr = list(zip(*radDataSet))
 
         # Reduce the numPoints x 8760 matrix to numPoints x 365 matrix by averaging
-        # dailiy illuminances.
+        # dailiy raduminances.
         dliDataSetDailyAvg = []
 
         dliDailyData = []
 
-        for ptsData in illDataSetTr:
-            # calculate daily average illuminances
+        for ptsData in radDataSetTr:
+            # calculate daily average raduminances
             ptsDataNew = [sum(ptsData[num * 24:(num + 1) * 24]) / 24 for num in
                           range(365)]
 
             # calculate dli
-            parData = [(avgIll * convFactor) * 0.0864 * 0.092903 for avgIll in
-                       ptsDataNew]
+            parData = [(avgRad * convFactor) * 0.0864 for avgRad in ptsDataNew]
 
             dliDailyData.append(parData)
 
@@ -101,7 +102,8 @@ class DLIdata(object):
         assert monthNum in range(1, 13), \
             "The input for monthNum (%s) must be a number between 1 (Jan) and 12 (Dec)"
         assert len(yearlyDLIdata[0]) == 365, \
-            "The dataset provided as input has incorrect number of data (%s) per point" % (
+            "The dataset provided as input has incorrect number of data (%s) per " \
+            "point" % (
                 len(yearlyDLIdata[0]))
 
         monthDates = [0] + [calendar.monthrange(2011, val)[-1] for val in range(1, 13)]
@@ -123,7 +125,8 @@ class DLIdata(object):
     def avgDLIAnnual(self):
         yearlyDLIdata = self.dliDailyData
         assert len(yearlyDLIdata[0]) == 365, \
-            "The dataset provided as input has incorrect number of data (%s) per point" % (
+            "The dataset provided as input has incorrect number of data (%s) per " \
+            "point" % (
                 len(yearlyDLIdata[0]))
 
         yearlyDLIdata = [sum(ptsData) / 365 for ptsData in yearlyDLIdata]
@@ -151,30 +154,30 @@ def consolidate_results(results, sun_hours):
 
     ptsFilePath = os.path.join(rootFolder, 'model', 'grid', '%s.pts' % resId)
 
-    return {'rad_ill': results, 'wea': weaFilePath, 'sun_hours': sun_hours,
+    return {'rad_rad': results, 'wea': weaFilePath, 'sun_hours': sun_hours,
             'pts': ptsFilePath,
             'root_dir': rootFolder}
 
 
-def prep_ill_file(res_dict, output_path=None, ill_multiplier=179):
+def prep_rad_file(res_dict, output_path=None):
     sun_hours_path = res_dict['sun_hours']
-    rad_ill_path = res_dict['rad_ill']
+    rad_rad_path = res_dict['rad_rad']
     wea_path = res_dict['wea']
     pts_path = res_dict['pts']
-    output_path = output_path or tempfile.mktemp(dir=res_dict['root_dir'], suffix='.ill')
+    output_path = output_path or tempfile.mktemp(dir=res_dict['root_dir'], suffix='.rad')
 
     with open(sun_hours_path) as sunData:
         sunList = list(map(float, sunData.read().split()))
 
-    illList = []
-    with open(rad_ill_path) as illData:
-        for lines in illData:
+    radList = []
+    with open(rad_rad_path) as radData:
+        for lines in radData:
             if lines.strip():
                 lineList = lines.strip().split()
-                illList.append(list(map(float, lineList)))
+                radList.append(list(map(float, lineList)))
 
-    ptsListLen = len(illList)
-    illList = list(zip(*illList))
+    ptsListLen = len(radList)
+    radList = list(zip(*radList))
 
     totalHourList = [idx + 0.5 for idx in range(8760)]
 
@@ -187,18 +190,18 @@ def prep_ill_file(res_dict, output_path=None, ill_multiplier=179):
             except ValueError:
                 pass  #
 
-    finalIllList = []
+    finalRadList = []
     for idx, hourVal in enumerate(weaHourList):
         currentHour = totalHourList[idx]
         if currentHour in sunList:
             hourIdx = sunList.index(currentHour)
-            illHourList = [ill * ill_multiplier for ill in illList[hourIdx]]
-            finalIllList.append(list(hourVal) + illHourList)
+            radHourList = [rad for rad in radList[hourIdx]]
+            finalRadList.append(list(hourVal) + radHourList)
         else:
-            finalIllList.append(hourVal + [0] * ptsListLen)
+            finalRadList.append(hourVal + [0] * ptsListLen)
 
     with open(output_path, 'w') as output_stream:
-        for lines in finalIllList:
+        for lines in finalRadList:
             write_val = " ".join(map(str, lines))
             output_stream.write(write_val + '\n')
 
@@ -212,12 +215,7 @@ if _radResults and _run:
 
     res_dict = consolidate_results(resPath, sunHoursPath)
 
-    illFilePath, ptsFilePath = prep_ill_file(res_dict)
+    radFilePath, ptsFilePath = prep_rad_file(res_dict)
 
-    dliData = DLIdata(illFilePath, ptsFilePath, _dliConvFactor_)
+    dliData = DLIdata(radFilePath, ptsFilePath, _dliConvFactor_)
     print(dliData.ToString())
-
-
-
-
-
