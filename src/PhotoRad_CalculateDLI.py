@@ -2,7 +2,7 @@
     Args:
         _radResults: The results from the AnnualIrradiance simulation run through
         HoneybeeRadiance.
-        _dliConvFactor: Conversion factor used to calculate PAR. Defaults to 0.2.
+        _dliConvFactor: Conversion factor used to calculate PAR from incident radiation. Defaults to 3.72.
         _run: Set this to True to run the component.
 
     Returns:
@@ -11,7 +11,7 @@
 
 ghenv.Component.Name = "PhotoRad_CalculateDLI"
 ghenv.Component.NickName = 'Calculate_DLI'
-ghenv.Component.Message = 'VER 0.0.04\nMar_29_2022'
+ghenv.Component.Message = 'VER 0.0.04\nMay_24_2022'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "PhotoRad"
 ghenv.Component.SubCategory = "0 | PhotoRad"
@@ -21,7 +21,7 @@ except:
     pass
 
 __author__ = "Sarith"
-__version__ = "2020.12.21"
+__version__ = "2022.05.24"
 
 import rhinoscriptsyntax as rs
 
@@ -211,11 +211,25 @@ def prep_rad_file(res_dict, output_path=None):
 
 
 if _radResults and _run:
-    resPath, sunHoursPath = _radResults
+    #Assuming that the last file is always the sunhours.
+    sunHoursPath=_radResults[-1]
+    #Create a separate list of ill files.
+    resPaths=_radResults[:-1]
 
-    res_dict = consolidate_results(resPath, sunHoursPath)
+    _dliConvFactor_=_dliConvFactor_ if _dliConvFactor_ else 3.72
+    # Initiate a new list for DLI data.
+    dliData=[]
+    for resPath in resPaths:
+        res_dict = consolidate_results(resPath, sunHoursPath)
 
-    radFilePath, ptsFilePath = prep_rad_file(res_dict)
+        radFilePath, ptsFilePath = prep_rad_file(res_dict)
 
-    dliData = DLIdata(radFilePath, ptsFilePath, _dliConvFactor_)
-    print(dliData.ToString())
+        dliData.append(DLIdata(radFilePath, ptsFilePath, _dliConvFactor_))
+
+
+
+
+
+
+
+
