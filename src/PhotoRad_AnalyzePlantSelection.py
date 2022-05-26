@@ -26,16 +26,16 @@ from __future__ import division
 
 ghenv.Component.Name = "PhotoRad_AnalyzePlantSelection"
 ghenv.Component.NickName = 'AnalyzePlantSelection'
-ghenv.Component.Message = 'VER 0.0.04\nMay_25_2022'
+ghenv.Component.Message = 'VER 0.0.04\nMay_26_2022'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "PhotoRad"
-ghenv.Component.SubCategory = "3 | Analysis"
+ghenv.Component.SubCategory = "2 | Analysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 
 __author__ = "Sarith"
-__version__ = "2021.05.25"
+__version__ = "2021.05.26"
 
 import rhinoscriptsyntax as rs
 import Grasshopper.Kernel as gh
@@ -44,11 +44,13 @@ import calendar
 
 
 class DLIfilterResult(object):
-    def __init__(self,plantInstance,resultPct,qualFactor,dliData):
+    def __init__(self,plantInstance,resultPct,qualFactor,dliData,dliRangeList):
         self.plantInstance=plantInstance
         self.resultPct=resultPct
         self.qualFactor=qualFactor
         self.dliData=dliData
+        self.dliRangeList=dliRangeList
+
     @property
     def selection(self):
         return True if self.resultPct[1]>self.qualFactor else False
@@ -168,7 +170,7 @@ def main(plantData,locationData,dliData,plantIndex,filterBySoilTemp,qualifyFract
     outputDict["chartTitleAna"]=plotTitle
     outputDict["chartTitleDLI"]=chartTitleDLI
     outputDict["legendTitleDLI"]="DLI"
-    outputDict["dliFilterResult"]=DLIfilterResult(plantInst,lowMatchMaxPctNum,qualifyFraction,dliData)
+    outputDict["dliFilterResult"]=DLIfilterResult(plantInst,lowMatchMaxPctNum,qualifyFraction,dliData,list(dliRangeList))
 
     #{"dliRangeList":None,"growSeasonSiteDLI":None,"legendTitleAna":None,
             #    "chartTitleAna":None, "chartTitleDLI":None,"legendTitleDLI":None,}
