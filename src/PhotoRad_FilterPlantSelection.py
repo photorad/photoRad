@@ -14,7 +14,7 @@ from __future__ import division
 
 ghenv.Component.Name = "PhotoRad_FilterPlantSelection"
 ghenv.Component.NickName = 'FilterPlantSelection'
-ghenv.Component.Message = 'VER 0.0.04\nMay_29_2022'
+ghenv.Component.Message = 'VER 0.0.05\nJun_02_2022'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "PhotoRad"
 ghenv.Component.SubCategory = "2 | Analysis"
@@ -23,7 +23,7 @@ except: pass
 
 
 __author__ = "SarithS"
-__version__ = "2022.05.29"
+__version__ = "2022.06.02"
 
 import rhinoscriptsyntax as rs
 import itertools
@@ -34,7 +34,7 @@ def selectPlants(dliFilterResult,dliData):
     nameListFinal=[[]]*dliData.dataSize[0]
     for result in dliFilterResult:
         if result.dliData==dliData:
-            nameList=[[result.plantInstance.name] if val==1 else [] for val in result.dliRangeList]
+            nameList=[[result.plantInstance.name] if val==2 else [] for val in result.dliRangeList]
             nameListFinal=[val+nameList[idx] for idx,val in enumerate(nameListFinal)]
     nameListFinal=[tuple(sorted(val)) for val in nameListFinal]
     nameListFinalSet=list(set(nameListFinal))
