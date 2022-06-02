@@ -2,7 +2,7 @@
     Args:
         _radResults: The results from the AnnualIrradiance simulation run through
         HoneybeeRadiance.
-        _dliConvFactor: Conversion factor used to calculate PAR from incident radiation. Defaults to 3.72.
+        _dliConvFactor_: Conversion factor used to calculate PAR from incident radiation. Defaults to 3.72.
         _run: Set this to True to run the component.
 
     Returns:
@@ -11,7 +11,7 @@
 
 ghenv.Component.Name = "PhotoRad_CalculateDLI"
 ghenv.Component.NickName = 'Calculate_DLI'
-ghenv.Component.Message = 'VER 0.0.04\nMay_24_2022'
+ghenv.Component.Message = 'VER 0.0.05\nJun_02_2022'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "PhotoRad"
 ghenv.Component.SubCategory = "0 | PhotoRad"
@@ -21,7 +21,7 @@ except:
     pass
 
 __author__ = "Sarith"
-__version__ = "2022.05.24"
+__version__ = "2022.06.02"
 
 import rhinoscriptsyntax as rs
 
@@ -117,6 +117,26 @@ class DLIdata(object):
 
         return avgMonthlyData
 
+       #Cumulative DLI for an entire month.
+    def cmuDLIMonthly(self, monthNum):
+        yearlyDLIdata = self.dliDailyData
+        assert monthNum in range(1, 13), \
+            "The input for monthNum (%s) must be a number between 1 (Jan) and 12 (Dec)"
+        assert len(yearlyDLIdata[0]) == 365, \
+            "The dataset provided as input has incorrect number of data (%s) per " \
+            "point" % (
+                len(yearlyDLIdata[0]))
+
+        monthDates = [0] + [calendar.monthrange(2011, val)[-1] for val in range(1, 13)]
+
+        monthDateSum = [sum(monthDates[:idx + 1]) for idx in range(len(monthDates))]
+
+        monthSliceStart, monthSliceEnd = monthDateSum[monthNum - 1:monthNum + 1]
+
+        cmuMonthlyData = [sum(ptsData[monthSliceStart:monthSliceEnd])  for ptsData in yearlyDLIdata]
+
+        return cmuMonthlyData
+
     @property
     def dataSize(self):
         return (len(self.dliDailyData), len(self.dliDailyData[0]))
@@ -130,6 +150,18 @@ class DLIdata(object):
                 len(yearlyDLIdata[0]))
 
         yearlyDLIdata = [sum(ptsData) / 365 for ptsData in yearlyDLIdata]
+
+        return yearlyDLIdata
+
+    @property
+    def cmuDLIAnnual(self):
+        yearlyDLIdata = self.dliDailyData
+        assert len(yearlyDLIdata[0]) == 365, \
+            "The dataset provided as input has incorrect number of data (%s) per " \
+            "point" % (
+                len(yearlyDLIdata[0]))
+
+        yearlyDLIdata = [sum(ptsData)  for ptsData in yearlyDLIdata]
 
         return yearlyDLIdata
 
