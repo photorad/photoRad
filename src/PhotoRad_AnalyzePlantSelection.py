@@ -12,6 +12,7 @@
     Output:
         plantSummary: Data summary of the plant being analyzed.
         growSeasonSiteDLI: The average grid-based DLI of the site that relates to the growing season of the plant being analyzed.
+        growSeasonSiteDLICmu: The cumulative grid-based DLI of the site that relates to the growing season of the plant being analyzed.
         DLIrangeList: A list containing 0s, 1s and 2s that indicates the number of grid points that are within the tolerance range of the plant being analyzed. For a particular grid-point, 0 implies below range, 1 implies within range and 2 implies above range.
         chartTitleAna: Chart-title for tolerance-range-based visualization.
         legendTitleAna: Legend-title for tolerance-range-based visualization.
@@ -26,7 +27,7 @@ from __future__ import division
 
 ghenv.Component.Name = "PhotoRad_AnalyzePlantSelection"
 ghenv.Component.NickName = 'AnalyzePlantSelection'
-ghenv.Component.Message = 'VER 0.0.04\nMay_26_2022'
+ghenv.Component.Message = 'VER 0.0.05\nJun_02_2022'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "PhotoRad"
 ghenv.Component.SubCategory = "2 | Analysis"
@@ -35,7 +36,7 @@ except: pass
 
 
 __author__ = "Sarith"
-__version__ = "2021.05.26"
+__version__ = "2022.06.02"
 
 import rhinoscriptsyntax as rs
 import Grasshopper.Kernel as gh
@@ -79,18 +80,17 @@ def main(plantData,locationData,dliData,plantIndex,filterBySoilTemp,qualifyFract
 
 
     growSeasonDLIList=[]
-
-   # growSeasonDLI=plantInst.growingSeasonDLI
-
-    dliRangeUp=plantInst.dliValue[1]
-    dliRangeLow=plantInst.dliValue[0]
+    growSeasonDLIListCmu=[]
 
     for month in growSeason:
         if not growSeasonDLIList:
             growSeasonDLIList.extend(dliData.avgDLIMonthly(month))
+            growSeasonDLIListCmu.extend(dliData.cmuDLIMonthly(month))
         else:
             for idx,val in enumerate(dliData.avgDLIMonthly(month)):
                 growSeasonDLIList[idx]+=val
+            for idx,val in enumerate(dliData.cmuDLIMonthly(month)):
+                growSeasonDLIListCmu[idx]+=val
 
     print("Grow season DLI calculated for months:%s"%",".join(map(str,growSeason)))
     growSeasonDLIList=[val/len(growSeason) for val in growSeasonDLIList]
@@ -108,6 +108,8 @@ def main(plantData,locationData,dliData,plantIndex,filterBySoilTemp,qualifyFract
     frthQ=statistics.mean(quartileRangeData[SecThirdQuartileIndex:])
 
 
+    dliRangeUp=plantInst.dliValue[1]
+    dliRangeLow=plantInst.dliValue[0]
 
 
     plotTitle="Report for: %s\n\n\n"%(plantName.upper())
@@ -166,6 +168,7 @@ def main(plantData,locationData,dliData,plantIndex,filterBySoilTemp,qualifyFract
 
     outputDict["dliRangeList"]=dliRangeList
     outputDict["growSeasonSiteDLI"]=growSeasonDLIList
+    outputDict["growSeasonSiteDLICmu"]=growSeasonDLIListCmu
     outputDict["legendTitleAna"]="0: BelowRange(%s), 1: WithinRange(%s), 2: AboveRange(%s)"%(lowMatchMaxPct[0],lowMatchMaxPct[1],lowMatchMaxPct[2])
     outputDict["chartTitleAna"]=plotTitle
     outputDict["chartTitleDLI"]=chartTitleDLI
@@ -198,3 +201,4 @@ if _plantData and _locationData and _dliData and (_plantIndex is not None):
     chartTitleDLI=outputDict["chartTitleDLI"]
     legendTitleDLI=outputDict["legendTitleDLI"]
     dliFilterResult=outputDict["dliFilterResult"]
+    growSeasonSiteDLICmu=outputDict["growSeasonSiteDLICmu"]
