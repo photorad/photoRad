@@ -19,15 +19,15 @@ If _minTemp_,_maxTemp_ and _hrdZone_ are all provided, then the values for _minT
 
 ghenv.Component.Name = "PhotoRad_DefineOnePlant"
 ghenv.Component.NickName = 'Define_One_Plant'
-ghenv.Component.Message = 'VER 0.0.04\nMar_29_2022'
+ghenv.Component.Message = 'VER 0.0.05\nJun_02_2022'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "PhotoRad"
 ghenv.Component.SubCategory = "01 | Plants"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
-__author__ = "Sarith"
-__version__ = "2022.03.29"
+__author__ = "SarithS"
+__version__ = "2022.06.02"
 
 #Notes to self:
 #If multiple hardiness zones are provided choose the min and max temps based on the lowest and highest values for zones.
